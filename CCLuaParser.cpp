@@ -12,39 +12,47 @@ USING_NS_CC;
 NS_LUAPARSER_BEGIN;
 
 LuaParser::LuaParser()
+: _stack(nullptr)
 {
 }
 
 LuaParser::~LuaParser()
 {
+    CC_SAFE_RELEASE_NULL(_stack);
 }
 
 bool LuaParser::init(const char *scriptName)
 {
     std::string moduleName = scriptName;
-    LuaEngine * engine = dynamic_cast<LuaEngine *>(ScriptEngineManager::getInstance()->getScriptEngine());
+    
+    _stack = LuaStack::create();
+    _stack->retain();
     
     if (moduleName.substr(moduleName.length() - 4, moduleName.length()) == ".lua") {
         moduleName.replace(moduleName.end() - 4, moduleName.end(), "");
-        engine->reload(moduleName.c_str());
     }
-    
-    engine->executeScriptFile(moduleName.c_str());
-    
     _scriptName = moduleName;
+    
+    this->reload();
     
     return true;
 }
 
 LuaParser* LuaParser::create(const char *scriptName)
 {
-    auto instance = new LuaParser();
+    auto instance = new (std::nothrow) LuaParser();
     if (instance && instance->init(scriptName)) {
         instance->autorelease();
         return instance;
     }
     CC_SAFE_DELETE(instance);
     return nullptr;
+}
+
+void LuaParser::reload()
+{
+    _stack->executeScriptFile(_scriptName.c_str());
+    _stack->clean();
 }
 
 cocos2d::LuaValue LuaParser::wrapLuaValue(int idx)
@@ -80,7 +88,7 @@ cocos2d::LuaValueArray LuaParser::executeFunction(const char *functionName, coco
             stack->pushLuaValue(arg);
         }
         
-        if (lua_pcall(L, args.size(), numberOfReturns, 0)) {
+        if (lua_pcall(L, (int)args.size(), numberOfReturns, 0)) {
             log("%s", lua_tostring(L, lua_gettop(L)));
             return LuaValueArray();
         }

@@ -30,6 +30,10 @@ private:
 public:
     static LuaParser * create(const char* scriptName);
     cocos2d::LuaValueArray executeFunction(const char* functionName, cocos2d::LuaValueArray args, int numberOfReturns);
+    
+    void reload();
+    /// Lua Stack
+    CC_SYNTHESIZE_READONLY(cocos2d::LuaStack *, _stack, Stack);
 };
 
 NS_LUAPARSER_END;
