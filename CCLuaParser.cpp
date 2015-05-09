@@ -7,6 +7,8 @@
 //
 
 #include "CCLuaParser.h"
+#include "tolua_fix.h"
+
 USING_NS_CC;
 
 NS_LUAPARSER_BEGIN;
@@ -25,7 +27,7 @@ bool LuaParser::init(const char *scriptName)
 {
     std::string moduleName = scriptName;
     
-    _stack = LuaStack::create();
+    _stack = LuaStack::attach(LuaEngine::getInstance()->getLuaStack()->getLuaState());
     _stack->retain();
     
     if (moduleName.substr(moduleName.length() - 4, moduleName.length()) == ".lua") {
@@ -57,9 +59,7 @@ void LuaParser::reload()
 
 cocos2d::LuaValue LuaParser::wrapLuaValue(int idx)
 {
-    LuaEngine * engine = dynamic_cast<LuaEngine *>(ScriptEngineManager::getInstance()->getScriptEngine());
-    auto stack = engine->getLuaStack();
-    auto L = stack->getLuaState();
+    auto L = _stack->getLuaState();
     
     if (lua_isboolean(L, idx)) {
         bool value = lua_toboolean(L, idx);
@@ -70,22 +70,21 @@ cocos2d::LuaValue LuaParser::wrapLuaValue(int idx)
     } else if (lua_isstring(L, idx)) {
         const char* value = lua_tostring(L, idx);
         return LuaValue::stringValue(value);
+    } else if (lua_isuserdata(L, idx)) {
+        auto obj = static_cast<Ref *>(tolua_tousertype(L, idx, nullptr));
+        return LuaValue::ccobjectValue(obj, "");
     }
-    return LuaValue::booleanValue(false);
+    assert("Unknown LuaValue");
 }
 
 cocos2d::LuaValueArray LuaParser::executeFunction(const char *functionName, cocos2d::LuaValueArray args, int numberOfReturns)
 {
-    LuaEngine * engine = dynamic_cast<LuaEngine *>(ScriptEngineManager::getInstance()->getScriptEngine());
-    engine->executeScriptFile(_scriptName.c_str());
-    
-    auto stack = engine->getLuaStack();
-    auto L = stack->getLuaState();
+    auto L = _stack->getLuaState();
     lua_getglobal(L, functionName);
     
     if (lua_isfunction(L, lua_gettop(L))) {
         for (auto& arg : args) {
-            stack->pushLuaValue(arg);
+            _stack->pushLuaValue(arg);
         }
         
         if (lua_pcall(L, (int)args.size(), numberOfReturns, 0)) {
