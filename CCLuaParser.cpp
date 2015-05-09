@@ -47,7 +47,7 @@ LuaParser* LuaParser::create(const char *scriptName)
     return nullptr;
 }
 
-cocos2d::LuaValue wrapLuaValue(int idx)
+cocos2d::LuaValue LuaParser::wrapLuaValue(int idx)
 {
     LuaEngine * engine = dynamic_cast<LuaEngine *>(ScriptEngineManager::getInstance()->getScriptEngine());
     auto stack = engine->getLuaStack();
