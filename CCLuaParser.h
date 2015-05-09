@@ -24,13 +24,12 @@ CC_CONSTRUCTOR_ACCESS:
     LuaParser();
     virtual ~LuaParser();
     bool init(const char* scriptName);
-    
-protected:
-    cocos2d::LuaValue wrapLuaValue(lua_State* L, int idx);
+private:
+    std::string _scriptName;
+    cocos2d::LuaValue wrapLuaValue(int idx);
 public:
     static LuaParser * create(const char* scriptName);
-    cocos2d::LuaValueArray executeFunction(const char* functionName, cocos2d::LuaValueArray args);
-    cocos2d::LuaValueArray executeFunction(lua_State* L, int idx, cocos2d::LuaValueArray args);
+    cocos2d::LuaValueArray executeFunction(const char* functionName, cocos2d::LuaValueArray args, int numberOfReturns);
 };
 
 NS_LUAPARSER_END;
