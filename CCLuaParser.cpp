@@ -1,6 +1,6 @@
 //
 //  CCLuaParser.cpp
-//  Hopper
+//  CCLuaParser
 //
 //  Created by giginet on 5/9/15.
 //
@@ -79,9 +79,10 @@ cocos2d::LuaValue LuaParser::wrapLuaValue(int idx)
 
 cocos2d::LuaValueArray LuaParser::executeFunction(const char *functionName, cocos2d::LuaValueArray args, int numberOfReturns)
 {
+    _stack->clean();
+    
     auto L = _stack->getLuaState();
     lua_getglobal(L, functionName);
-    
     if (lua_isfunction(L, lua_gettop(L))) {
         for (auto& arg : args) {
             _stack->pushLuaValue(arg);
